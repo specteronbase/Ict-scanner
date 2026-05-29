@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="ICT Scanner"/>
+<title>ICT Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg0:#020a14;--bg1:#050f1e;--bg2:#071626;--bg3:#0c1e34;
+  --border:#0d2540;--border2:#1a3a5c;
+  --text:#c8d8e8;--text2:#6a8aaa;--text3:#2a4a6a;
+  --green:#00e676;--red:#ff5252;--gold:#ffc107;
+  --blue:#29b6f6;--purple:#ce93d8;--teal:#4db6ac;
+  --font:'Share Tech Mono',monospace;--font-h:'Orbitron',monospace;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --nav-h:56px;
+}
+html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--font);font-size:13px;overflow:hidden;-webkit-text-size-adjust:100%}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none;-webkit-appearance:none}
+::-webkit-scrollbar{display:none}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#status-space{height:var(--safe-top);background:var(--bg2);flex-shrink:0}
+#topbar{background:linear-gradient(180deg,var(--bg2),var(--bg1));border-bottom:1px solid var(--border);padding:10px 16px 8px;flex-shrink:0}
+.tb-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-title{font-family:var(--font-h);font-size:16px;color:var(--blue);font-weight:900;letter-spacing:2px}
+.brand-sub{color:var(--text3);font-size:9px;letter-spacing:1px}
+#status-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+#status-dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.2s infinite}
+#kz-badge{padding:3px 8px;border-radius:4px;font-size:8px;font-weight:700;border:1px solid var(--border2);color:var(--text2);background:var(--bg0);white-space:nowrap;transition:all .3s}
+#kz-badge.on{color:var(--gold);border-color:rgba(255,193,7,.5);background:rgba(255,193,7,.08)}
+#scan-btn{padding:6px 14px;border-radius:6px;background:#0277bd;color:#fff;font-size:10px;font-weight:700;min-width:80px}
+#scan-btn:disabled{background:var(--bg3);color:var(--text3)}
+#tf-row{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.tf-btn{flex-shrink:0;padding:5px 12px;border-radius:5px;font-size:10px;font-weight:700;background:var(--bg0);color:var(--text3);border:1px solid var(--border);white-space:nowrap;transition:all .15s}
+.tf-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+#progress-bar{height:2px;background:var(--border);flex-shrink:0;overflow:hidden}
+#progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .4s}
+#alerts-strip{background:var(--bg1);border-bottom:1px solid var(--border);padding:5px 14px;display:flex;gap:6px;align-items:center;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch}
+#alerts-strip.hidden{display:none}
+.a-label{color:var(--green);font-size:9px;font-weight:700;flex-shrink:0}
+.a-pill{display:flex;gap:5px;align-items:center;padding:4px 9px;border-radius:5px;background:var(--bg2);border:1px solid var(--border2);flex-shrink:0}
+.a-pill:active{opacity:.7}
+.a-pill .ac{color:#e8f0f8;font-weight:700;font-size:10px}
+.a-pill .ab.long{color:var(--green);font-size:9px}
+.a-pill .ab.short{color:var(--red);font-size:9px}
+.a-pill .am{color:var(--text3);font-size:8px}
+#pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 16px)}
+.page.active{display:block}
+#p-scanner{padding:10px}
+#filter-row{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;-webkit-overflow-scrolling:touch}
+.chip-group{display:flex;gap:4px;flex-shrink:0}
+.chip-sep{width:1px;background:var(--border);flex-shrink:0;margin:2px 2px}
+.chip{padding:5px 12px;border-radius:20px;font-size:9px;font-weight:700;background:var(--bg1);color:var(--text3);border:1px solid var(--border);white-space:nowrap}
+.chip.active{background:var(--bg3);color:var(--blue);border-color:var(--blue)}
+.coin-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:13px 13px 11px;margin-bottom:8px;-webkit-user-select:none;user-select:none}
+.coin-card:active{opacity:.85}
+.coin-card.hl{border-color:rgba(0,230,118,.35)}
+.coin-card.hs{border-color:rgba(255,82,82,.35)}
+.ch{display:flex;gap:10px;align-items:center;margin-bottom:9px}
+/* Score ring — uses canvas now */
+.sr-wrap{position:relative;width:54px;height:54px;flex-shrink:0}
+.sr-canvas{position:absolute;top:0;left:0}
+.sr-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sr-n{font-size:13px;font-weight:800;line-height:1;font-family:var(--font-h)}
+.sr-b{font-size:7px;color:var(--text2);line-height:1.3}
+.ct{flex:1;min-width:0}
+.ct-r1{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.cn{color:#e8f0f8;font-weight:700;font-size:16px;font-family:var(--font-h)}
+.cpair{color:var(--text3);font-size:9px}
+.cc{font-weight:700;font-size:12px}
+.cc.pos{color:var(--green)}.cc.neg{color:var(--red)}
+.ct-r2{display:flex;justify-content:space-between;align-items:center}
+.cprice{color:var(--text2);font-size:13px}
+.btag{font-size:8px;font-weight:700;padding:3px 7px;border-radius:4px}
+.btag.long{color:var(--green);background:rgba(0,230,118,.12)}
+.btag.short{color:var(--red);background:rgba(255,82,82,.12)}
+.btag.neutral{color:var(--text2);background:rgba(106,138,170,.1)}
+.chart-box{margin-bottom:9px;border-radius:6px;overflow:hidden;background:#040d1a;line-height:0}
+.chart-box canvas{display:block}
+.sigs{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px}
+.sig{font-size:8px;padding:3px 6px;border-radius:3px;background:var(--bg0);border:1px solid var(--border);color:var(--text2);font-weight:600}
+.card-plan{background:var(--bg0);border-radius:8px;padding:8px 10px;border:1px solid var(--border)}
+.cp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cp-label{font-size:9px;font-weight:700}
+.cp-rr{font-size:9px;color:#4ade80}
+.cp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.cp-cell{background:var(--bg1);border-radius:5px;padding:5px 6px}
+.cp-l{color:var(--text3);font-size:7px;margin-bottom:2px}
+.cp-v{font-size:9px;font-weight:700}
+.no-plan{text-align:center;padding:8px;color:var(--text3);font-size:9px}
+/* Bottom sheet */
+#sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:none;opacity:0;transition:opacity .25s;pointer-events:none}
+#sheet-bg.ready{display:block}
+#sheet-bg.vis{opacity:1;pointer-events:auto}
+#sheet{position:fixed;bottom:0;left:0;right:0;z-index:101;background:var(--bg1);border-radius:18px 18px 0 0;border-top:1px solid var(--border2);max-height:88vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+#sheet.open{transform:translateY(0)}
+#sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:10px auto 0}
+#sheet-header{padding:12px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+#sheet-title{display:flex;align-items:baseline;gap:8px}
+#sheet-coin{font-family:var(--font-h);font-size:18px;color:#e8f0f8;font-weight:900}
+#sheet-tf{color:var(--text3);font-size:10px}
+#sheet-score{font-size:10px;color:var(--text2)}
+#sheet-close{width:30px;height:30px;border-radius:15px;background:var(--bg3);color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;flex:1;padding-bottom:calc(var(--safe-bot) + 24px)}
+.plan-wrap{margin-bottom:10px;border-radius:12px;overflow:hidden}
+.plan-hdr{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.plan-bias-lbl{font-family:var(--font-h);font-size:12px;font-weight:900;letter-spacing:1px}
+.plan-stats{display:flex;gap:14px}
+.ps{text-align:right}
+.ps-l{color:var(--text3);font-size:8px}
+.ps-v{font-size:11px;font-weight:700}
+.plan-body{padding:12px;display:flex;flex-direction:column;gap:6px}
+.entry-box{border-radius:8px;padding:10px 12px}
+.entry-title{font-size:10px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.entry-basis{font-size:8px;font-weight:400;color:var(--text2)}
+.entry-prices{display:flex;gap:10px;flex-wrap:wrap}
+.ep{flex:1;min-width:60px}
+.ep-l{color:var(--text3);font-size:8px;margin-bottom:2px}
+.ep-v{font-size:12px;font-weight:700}
+.entry-status{margin-top:7px;font-size:9px;color:var(--text2);padding:4px 8px;background:rgba(0,0,0,.3);border-radius:4px}
+.sl-box{border-radius:8px;padding:10px 12px;background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.2);display:flex;justify-content:space-between;align-items:center}
+.sl-l{color:var(--red);font-size:10px;font-weight:700}
+.sl-basis{color:var(--text3);font-size:9px;margin-top:2px}
+.sl-price{color:#ffcdd2;font-size:15px;font-weight:800;text-align:right}
+.sl-risk{color:#7f1d1d;font-size:9px;text-align:right;margin-top:1px}
+.tp-box{border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.tp-l-row{display:flex;gap:6px;align-items:center;margin-bottom:3px}
+.tp-lbl{font-size:10px;font-weight:700}
+.tp-pct{font-size:7px;padding:2px 5px;border-radius:3px;color:#000;font-weight:700}
+.tp-basis{font-size:9px;color:var(--text3)}
+.tp-price{font-size:15px;font-weight:800;text-align:right}
+.tp-rr{color:#4ade80;font-size:9px;text-align:right;margin-top:1px}
+.sizing-box{background:var(--bg2);border-radius:8px;padding:10px 12px;border:1px solid var(--border2);margin-top:2px}
+.sz-label{color:var(--text3);font-size:8px;letter-spacing:.5px;margin-bottom:7px}
+.sz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.sz-cell{background:var(--bg0);border-radius:6px;padding:7px 8px}
+.sz-a{color:var(--text3);font-size:8px;margin-bottom:2px}
+.sz-v{color:var(--blue);font-size:11px;font-weight:700}
+.sz-s{color:var(--border2);font-size:7px}
+.structs{margin-top:10px}
+.structs-lbl{color:var(--text3);font-size:8px;letter-spacing:1px;margin-bottom:6px}
+.struct-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg2);font-size:9px}
+.pd-mini{background:var(--bg2);border-radius:6px;padding:8px;margin-top:6px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pdi-l{color:var(--text3);font-size:7px;margin-bottom:2px}
+.pdi-v{font-size:9px;font-weight:700}
+.no-plan-box{background:var(--bg2);border:1px dashed var(--border2);border-radius:8px;padding:16px;text-align:center}
+.no-plan-box p{color:var(--text3);font-size:10px}
+.no-plan-box small{color:var(--border);font-size:9px;display:block;margin-top:4px}
+.warn{padding:10px 12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border2);color:var(--text3);font-size:9px;line-height:1.6;margin-top:8px}
+#p-market{padding:12px}
+.sec-lbl{color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:8px;margin-top:4px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px}
+.stat-cell{background:var(--bg1);border-radius:10px;padding:12px 14px;border:1px solid var(--border)}
+.stat-l{color:var(--text3);font-size:9px;margin-bottom:4px}
+.stat-v{font-size:22px;font-weight:800;font-family:var(--font-h)}
+.top-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:5px;background:var(--bg1);border-radius:10px;border:1px solid var(--border);-webkit-user-select:none}
+.top-row:active{background:var(--bg2)}
+.tr-l{display:flex;gap:8px;align-items:center}
+.tr-r{display:flex;gap:10px;align-items:center}
+#p-guide{padding:12px}
+.guide-card{background:var(--bg1);border-radius:10px;padding:12px;border:1px solid var(--border);margin-bottom:8px}
+.gc-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.gc-icon{font-size:14px}
+.gc-title{font-size:11px;font-weight:700}
+.gc-body{color:var(--text2);font-size:9px;line-height:1.7}
+.kz-item{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:5px;border-radius:8px;border:1px solid transparent}
+.kz-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.kz-n{font-size:10px;font-weight:700}
+.kz-t{font-size:9px}
+.kz-tip{font-size:8px;color:var(--text3)}
+#nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bot));background:var(--bg1);border-top:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-around;padding-top:4px;z-index:50}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;background:transparent;color:var(--text3);min-width:60px;border:none}
+.nav-btn.active{color:var(--blue)}
+.nav-icon{font-size:18px;line-height:1}
+.nav-lbl{font-size:8px;font-weight:700;letter-spacing:.5px}
+#empty-msg{text-align:center;padding:60px 20px;color:var(--text3);font-size:11px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="status-space"></div>
+  <div id="topbar">
+    <div class="tb-row1">
+      <div class="brand">
+        <div id="status-dot"></div>
+        <span class="brand-title">ICT</span>
+        <span class="brand-sub">× HYPERLIQUID</span>
+        <div id="kz-badge">OFF-HOURS</div>
+      </div>
+      <button id="scan-btn">↻ SCAN</button>
+    </div>
+    <div id="tf-row">
+      <button class="tf-btn active" data-iv="5m">5m</button>
+      <button class="tf-btn" data-iv="15m">15m</button>
+      <button class="tf-btn" data-iv="1h">1H</button>
+      <button class="tf-btn" data-iv="4h">4H</button>
+      <button class="tf-btn" data-iv="12h">12H</button>
+      <button class="tf-btn" data-iv="1d">1D</button>
+      <button class="tf-btn" data-iv="1w">1W</button>
+    </div>
+  </div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <div id="alerts-strip" class="hidden"><span class="a-label">🔔</span></div>
+  <div id="pages">
+    <div id="p-scanner" class="page active">
+      <div id="filter-row">
+        <div class="chip-group">
+          <button class="chip active" data-g="bias" data-v="ALL">ALL</button>
+          <button class="chip" data-g="bias" data-v="LONG">LONG</button>
+          <button class="chip" data-g="bias" data-v="SHORT">SHORT</button>
+        </div>
+        <div class="chip-sep"></div>
+        <div class="chip-group">
+          <button class="chip active" data-g="score" data-v="0">Any</button>
+          <button class="chip" data-g="score" data-v="40">40+</button>
+          <button class="chip" data-g="score" data-v="60">60+</button>
+          <button class="chip" data-g="score" data-v="70">70+</button>
+        </div>
+        <div class="chip-sep"></div>
+        <div class="chip-group">
+          <button class="chip active" data-g="sort" data-v="score">Score</button>
+          <button class="chip" data-g="sort" data-v="chg">Chg%</button>
+        </div>
+      </div>
+      <div id="card-list"></div>
+      <div id="empty-msg" style="display:none">Scanning Hyperliquid…</div>
+    </div>
+    <div id="p-market" class="page">
+      <div class="sec-lbl">MARKET OVERVIEW</div>
+      <div class="stat-grid" id="stat-grid"></div>
+      <div class="sec-lbl">TOP SETUPS</div>
+      <div id="top-list"></div>
+    </div>
+    <div id="p-guide" class="page"><div id="guide-content"></div></div>
+  </div>
+  <div id="nav">
+    <button class="nav-btn active" data-page="p-scanner"><span class="nav-icon">⬡</span><span class="nav-lbl">SCANNER</span></button>
+    <button class="nav-btn" data-page="p-market"><span class="nav-icon">◈</span><span class="nav-lbl">MARKET</span></button>
+    <button class="nav-btn" data-page="p-guide"><span class="nav-icon">◎</span><span class="nav-lbl">GUIDE</span></button>
+  </div>
+</div>
+<div id="sheet-bg">
+  <div id="sheet">
+    <div id="sheet-handle"></div>
+    <div id="sheet-header">
+      <div id="sheet-title">
+        <span id="sheet-coin">—</span>
+        <span id="sheet-tf"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="sheet-score"></span>
+        <button id="sheet-close">✕</button>
+      </div>
+    </div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+<script>
+// ── STATE
+const S={results:{},interval:'5m',filterBias:'ALL',minScore:0,sortBy:'score',page:'p-scanner',alerts:[],scanCount:0};
+const COINS=['BTC','ETH','SOL','BNB','AVAX','LINK','ARB','OP','DOGE','PEPE','WIF','SUI','TIA','INJ','SEI','APT','NEAR','ATOM','FTM','HYPE'];
+const HL='https://api.hyperliquid.xyz/info';
+const IV_MS={'5m':3e5,'15m':9e5,'1h':36e5,'4h':144e5,'12h':432e5,'1d':864e5,'1w':6048e5};
+const IV_CNT={'5m':120,'15m':120,'1h':120,'4h':100,'12h':80,'1d':60,'1w':52};
+const IV_LBL={'5m':'5 Min','15m':'15 Min','1h':'1 Hour','4h':'4 Hour','12h':'12 Hour','1d':'Daily','1w':'Weekly'};
+
+// ── CANVAS CHART (Safari-safe, no SVG innerHTML)
+function drawCanvasChart(canvas, cs, pl) {
+  if (!canvas || !cs || !cs.length) return;
+  // Dimensions set as JS properties by makeCard — read them directly
+  const w = canvas.width  || canvas.offsetWidth  || 300;
+  const h = canvas.height || canvas.offsetHeight || 62;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  // Set backing store to physical pixels
+  canvas.width  = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  // Scale context so all draw calls use CSS pixels
+  ctx.scale(dpr, dpr);
+
+  const sl = cs.slice(-35);
+  const pts = sl.flatMap(c => [c.h, c.l]);
+  if (pl) [pl.sl, pl.tp1, pl.tp2, pl.tp3, pl.entryLow, pl.entryHigh].forEach(v => v && pts.push(v));
+  const hi = Math.max.apply(null, pts), lo = Math.min.apply(null, pts), rng = hi - lo || 1;
+  const cw = w / sl.length;
+  const py = v => ((hi - v) / rng) * h;
+
+  // Background
+  ctx.fillStyle = '#040d1a';
+  ctx.fillRect(0, 0, w, h);
+
+  // Entry zone highlight
+  if (pl) {
+    ctx.fillStyle = pl.bias === 'LONG' ? 'rgba(0,230,118,0.10)' : 'rgba(255,82,82,0.10)';
+    const ey1 = py(pl.entryHigh), ey2 = py(pl.entryLow);
+    ctx.fillRect(0, Math.min(ey1, ey2), w, Math.abs(ey2 - ey1));
+  }
+
+  // Candles
+  sl.forEach((c, i) => {
+    const x = i * cw + cw / 2;
+    const green = c.c >= c.o;
+    ctx.strokeStyle = green ? '#00e676' : '#ff5252';
+    ctx.fillStyle   = green ? '#00e676' : '#ff5252';
+    // Wick
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x, py(c.h));
+    ctx.lineTo(x, py(c.l));
+    ctx.stroke();
+    // Body
+    const bodyTop = py(Math.max(c.o, c.c));
+    const bodyH   = Math.max(py(Math.min(c.o, c.c)) - bodyTop, 1);
+    ctx.fillRect(i * cw + 0.5, bodyTop, Math.max(cw - 1, 1), bodyH);
+  });
+
+  if (!pl) return;
+
+  // Entry mid line (solid)
+  const entryColor = pl.bias === 'LONG' ? '#00e676' : '#ff5252';
+  ctx.strokeStyle = entryColor;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(0, py(pl.entryMid));
+  ctx.lineTo(w, py(pl.entryMid));
+  ctx.stroke();
+
+  // SL / TP dashed lines with labels
+  const lines = [
+    {y: pl.sl,  color: '#ff5252', label: 'SL'},
+    {y: pl.tp1, color: '#ffc107', label: 'TP1'},
+    {y: pl.tp2, color: '#4db6ac', label: 'TP2'},
+    {y: pl.tp3, color: '#00e676', label: 'TP3'},
+  ];
+  ctx.font = '8px Share Tech Mono, monospace';
+  lines.forEach(({y, color, label}) => {
+    const yp = py(y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(0, yp);
+    ctx.lineTo(w, yp);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.textAlign = 'right';
+    ctx.fillText(label, w - 2, yp - 2);
+  });
+}
+
+// ── SCORE RING via Canvas
+function drawScoreRing(canvas, score, color) {
+  if (!canvas) return;
+  const size = 54;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  canvas.width  = Math.round(size * dpr);
+  canvas.height = Math.round(size * dpr);
+  canvas.style.width  = size + 'px';
+  canvas.style.height = size + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const cx = size / 2, cy = size / 2, r = 20;
+  // Track
+  ctx.strokeStyle = '#0d2540';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  // Progress
+  if (score > 0) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (score / 100) * Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// ── ICT ENGINE
+function fvg(cs){const r=[];for(let i=2;i<cs.length;i++){const a=cs[i-2],c=cs[i];if(c.l-a.h>0)r.push({type:'bullish',top:c.l,bottom:a.h,mid:(c.l+a.h)/2,age:cs.length-i});if(a.l-c.h>0)r.push({type:'bearish',top:a.l,bottom:c.h,mid:(a.l+c.h)/2,age:cs.length-i});}return r.slice(-8);}
+function obs(cs){const r=[];for(let i=1;i<cs.length-4;i++){const c=cs[i],nx=cs[i+1];if(!cs.slice(i+1,i+6).some(s=>Math.abs(s.c-c.c)/c.c>0.004))continue;if(c.c<c.o&&nx.c>nx.o&&nx.c>c.h)r.push({type:'bullish',top:c.h,bottom:c.l,mid:(c.h+c.l)/2,age:cs.length-i});if(c.c>c.o&&nx.c<nx.o&&nx.c<c.l)r.push({type:'bearish',top:c.h,bottom:c.l,mid:(c.h+c.l)/2,age:cs.length-i});}return r.slice(-6);}
+function swings(cs,lb=5){const h=[],l=[];for(let i=lb;i<cs.length-lb;i++){const sl=cs.slice(i-lb,i+lb+1);if(sl.every((c,j)=>j===lb||c.h<=cs[i].h))h.push({price:cs[i].h});if(sl.every((c,j)=>j===lb||c.l>=cs[i].l))l.push({price:cs[i].l});}return{highs:h.slice(-5),lows:l.slice(-5)};}
+function sweep(cs){if(cs.length<25)return null;const{highs,lows}=swings(cs.slice(0,-3));if(!highs.length||!lows.length)return null;const th=Math.max.apply(null,highs.map(h=>h.price)),bl=Math.min.apply(null,lows.map(l=>l.price)),l3=cs.slice(-3);if(l3.some(c=>c.h>th&&c.c<th))return{type:'bearish_sweep',level:th,label:'BSL Swept'};if(l3.some(c=>c.l<bl&&c.c>bl))return{type:'bullish_sweep',level:bl,label:'SSL Swept'};return null;}
+function choch(cs){if(cs.length<15)return null;const sl=cs.slice(-20);let ph=-Infinity,pl=Infinity;for(let i=0;i<sl.length-4;i++){if(sl[i].h>ph)ph=sl[i].h;if(sl[i].l<pl)pl=sl[i].l;}const la=sl[sl.length-1],pr=sl[sl.length-2],bd=Math.abs(la.c-la.o)/(la.h-la.l+.0001);if(bd>.5&&pr.c>pr.o&&la.c<pr.l&&la.c<pl)return{type:'bearish_choch',label:'Bearish CHoCH'};if(bd>.5&&pr.c<pr.o&&la.c>pr.h&&la.c>ph)return{type:'bullish_choch',label:'Bullish CHoCH'};return null;}
+function pdCalc(cs){if(cs.length<30)return null;const sl=cs.slice(-60),hi=Math.max.apply(null,sl.map(c=>c.h)),lo=Math.min.apply(null,sl.map(c=>c.l)),rng=hi-lo;if(!rng)return null;const p=cs[cs.length-1].c,pct=((p-lo)/rng)*100;return{high:hi,low:lo,mid:lo+rng*.5,ote618:lo+rng*.618,ote79:lo+rng*.79,price:p,range:rng,pct:pct.toFixed(1),zone:pct>62?'Premium':pct<38?'Discount':'Equilibrium'};}
+function kzDetect(){const t=new Date().getUTCHours()*60+new Date().getUTCMinutes();if(t>=540&&t<=600)return{name:'Silver Bullet',color:'#ce93d8',active:true};if(t>=120&&t<=300)return{name:'London Open',color:'#29b6f6',active:true};if(t>=480&&t<=600)return{name:'NY Open',color:'#ffc107',active:true};if(t>=780&&t<=840)return{name:'London Close',color:'#7986cb',active:true};if(t>=1200&&t<=1440)return{name:'Asian Range',color:'#ffc107',active:true};return{name:'Off-Hours',color:'#2a4a6a',active:false};}
+function atr(cs,p=14){if(cs.length<p+1)return cs[cs.length-1].c*.01;const tr=cs.slice(-p-1).map((c,i,a)=>i===0?c.h-c.l:Math.max(c.h-c.l,Math.abs(c.h-a[i-1].c),Math.abs(c.l-a[i-1].c)));return tr.slice(1).reduce((a,b)=>a+b,0)/p;}
+function buildPlan(cs,fvgs,obls,sw,ch,pdv){
+  const price=cs[cs.length-1].c,at=atr(cs);
+  let bias='NEUTRAL';
+  if(sw&&sw.type==='bullish_sweep'||ch&&ch.type==='bullish_choch')bias='LONG';
+  if(sw&&sw.type==='bearish_sweep'||ch&&ch.type==='bearish_choch')bias='SHORT';
+  if(bias==='NEUTRAL')return null;
+  const iL=bias==='LONG',slb=at*.15;
+  let eH,eL,eB='Price';
+  const ob2=iL?obls.filter(o=>o.type==='bullish'&&o.top<price).sort((a,b)=>b.top-a.top)[0]:obls.filter(o=>o.type==='bearish'&&o.bottom>price).sort((a,b)=>a.bottom-b.bottom)[0];
+  const fv2=iL?fvgs.filter(f=>f.type==='bullish'&&f.top<price).sort((a,b)=>b.top-a.top)[0]:fvgs.filter(f=>f.type==='bearish'&&f.bottom>price).sort((a,b)=>a.bottom-b.bottom)[0];
+  if(ob2){eH=ob2.top;eL=ob2.mid;eB='OB OTE';}
+  else if(fv2){eH=fv2.top;eL=fv2.bottom;eB='FVG Fill';}
+  else if(pdv&&iL&&pdv.pct<50){eH=pdv.ote618;eL=pdv.mid;eB='OTE 50-61.8%';}
+  else if(pdv&&!iL&&pdv.pct>50){eH=pdv.ote79;eL=pdv.ote618;eB='OTE 61.8-79%';}
+  else{eH=iL?price:price+at*.5;eL=iL?price-at*.5:price;eB='Current';}
+  const eM=(eH+eL)/2;
+  let sl,slB;
+  if(iL){sl=ob2?ob2.bottom-slb:sw?sw.level-slb*2:eL-at*.8;slB=ob2?'Below OB':sw?'Below Sweep':'ATR';}
+  else{sl=ob2?ob2.top+slb:sw?sw.level+slb*2:eH+at*.8;slB=ob2?'Above OB':sw?'Above Sweep':'ATR';}
+  const risk=Math.abs(eM-sl);if(!risk)return null;
+  const{highs,lows}=swings(cs);
+  let tp1,tp2,tp3,t1B,t2B,t3B;
+  if(iL){const nf=fvgs.filter(f=>f.type==='bearish'&&f.bottom>eM).sort((a,b)=>a.bottom-b.bottom)[0];tp1=nf?nf.bottom:eM+risk;t1B=nf?'Bear FVG':'1:1 RR';const nh=highs.filter(h=>h.price>tp1).sort((a,b)=>a.price-b.price)[0];tp2=nh?nh.price:eM+risk*2;t2B=nh?'Swing High':'2:1 RR';tp3=pdv?pdv.high:eM+risk*3;t3B=pdv?'Premium High':'3:1 RR';}
+  else{const nf=fvgs.filter(f=>f.type==='bullish'&&f.top<eM).sort((a,b)=>b.top-a.top)[0];tp1=nf?nf.top:eM-risk;t1B=nf?'Bull FVG':'1:1 RR';const nl=lows.filter(l=>l.price<tp1).sort((a,b)=>b.price-a.price)[0];tp2=nl?nl.price:eM-risk*2;t2B=nl?'Swing Low':'2:1 RR';tp3=pdv?pdv.low:eM-risk*3;t3B=pdv?'Discount Low':'3:1 RR';}
+  return{bias,entryLow:eL,entryHigh:eH,entryMid:eM,entryBasis:eB,sl,slBasis:slB,risk,slPct:((risk/eM)*100).toFixed(2),tp1,tp1B:t1B,rr1:(Math.abs(tp1-eM)/risk).toFixed(2),tp2,tp2B:t2B,rr2:(Math.abs(tp2-eM)/risk).toFixed(2),tp3,tp3B:t3B,rr3:(Math.abs(tp3-eM)/risk).toFixed(2)};
+}
+function calcScore(fvgs,obls,sw,ch,kzv,pdv,pl){
+  let s=0;const sig=[];
+  if(fvgs.some(f=>f.age<5)){s+=20;sig.push('Fresh FVG');}
+  if(obls.some(o=>o.age<10)){s+=20;sig.push('Order Block');}
+  if(sw){s+=30;sig.push(sw.label);}
+  if(ch){s+=25;sig.push(ch.label);}
+  if(kzv.active){s+=15;sig.push(kzv.name);}
+  if(pdv&&pdv.zone!=='Equilibrium'){s+=10;sig.push(pdv.zone);}
+  if(pl)s+=5;
+  const bias=sw&&sw.type==='bullish_sweep'||ch&&ch.type==='bullish_choch'?'LONG':sw&&sw.type==='bearish_sweep'||ch&&ch.type==='bearish_choch'?'SHORT':'NEUTRAL';
+  return{score:Math.min(s,100),signals:sig,bias};
+}
+
+// ── API
+async function fetchCandles(coin,iv){
+  const ms=IV_MS[iv]||9e5,cnt=IV_CNT[iv]||120,now=Date.now();
+  const res=await fetch(HL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'candleSnapshot',req:{coin,interval:iv,startTime:now-ms*cnt,endTime:now}})});
+  const d=await res.json();
+  return(d||[]).map(c=>({t:c.t,o:+c.o,h:+c.h,l:+c.l,c:+c.c,v:+c.v}));
+}
+
+// ── FORMAT
+function fmt(v,d=4){if(v==null)return'—';if(v>=1000)return v.toLocaleString(undefined,{maximumFractionDigits:2});return parseFloat(v.toPrecision(d)).toString();}
+function bcolor(b){return b==='LONG'?'#00e676':b==='SHORT'?'#ff5252':'#6a8aaa';}
+function scolor(s){return s>=70?'#00e676':s>=45?'#ffc107':'#2a4a6a';}
+function bcls(b){return b==='LONG'?'long':b==='SHORT'?'short':'neutral';}
+
+// ── SCAN
+let scanning=false;
+async function scanCoin(coin){
+  try{
+    const cs=await fetchCandles(coin,S.interval);
+    if(!cs||cs.length<15)return;
+    const fv=fvg(cs),ob=obs(cs),sw=sweep(cs),ch=choch(cs),pdv=pdCalc(cs),kzv=kzDetect();
+    const pl=buildPlan(cs,fv,ob,sw,ch,pdv);
+    const{score:sc,signals:sig,bias}=calcScore(fv,ob,sw,ch,kzv,pdv,pl);
+    const price=cs[cs.length-1].c,prev=cs[cs.length-2].c;
+    const chg=((price-prev)/prev*100).toFixed(2);
+    if(!S.results[coin]&&sc>=70&&pl){
+      S.alerts.unshift({coin,score:sc,bias,time:new Date().toLocaleTimeString(),id:Date.now()});
+      S.alerts=S.alerts.slice(0,8);
+    }
+    S.results[coin]={coin,candles:cs,fvgs:fv,obls:ob,sweep:sw,choch:ch,pd:pdv,kz:kzv,plan:pl,score:sc,signals:sig,bias,price,chg};
+  }catch(e){}
+}
+
+async function runScan(){
+  if(scanning)return;
+  scanning=true;
+  document.getElementById('status-dot').classList.add('on');
+  document.getElementById('scan-btn').disabled=true;
+  document.getElementById('scan-btn').textContent='⟳';
+  updateKZ();
+  for(let i=0;i<COINS.length;i+=4){
+    await Promise.all(COINS.slice(i,i+4).map(scanCoin));
+    document.getElementById('progress-fill').style.width=Math.min(Math.round(((i+4)/COINS.length)*100),100)+'%';
+    renderCards();
+    await new Promise(r=>setTimeout(r,350));
+  }
+  S.scanCount++;
+  scanning=false;
+  document.getElementById('status-dot').classList.remove('on');
+  document.getElementById('scan-btn').disabled=false;
+  document.getElementById('scan-btn').textContent='↻ SCAN';
+  document.getElementById('progress-fill').style.width='100%';
+  setTimeout(()=>{document.getElementById('progress-fill').style.width='0%';},600);
+  renderCards();renderAlerts();
+  if(S.page==='p-market')renderMarket();
+}
+
+// ── KZ BADGE
+function updateKZ(){
+  const k=kzDetect(),el=document.getElementById('kz-badge');
+  el.textContent=k.name.toUpperCase();
+  if(k.active){el.classList.add('on');el.style.color=k.color;el.style.borderColor=k.color+'80';}
+  else{el.classList.remove('on');el.style.color='';el.style.borderColor='';}
+}
+
+// ── RENDER CARDS
+function getSorted(){
+  return Object.values(S.results)
+    .filter(r=>S.filterBias==='ALL'||r.bias===S.filterBias)
+    .filter(r=>r.score>=S.minScore)
+    .sort((a,b)=>S.sortBy==='score'?b.score-a.score:Math.abs(b.chg)-Math.abs(a.chg));
+}
+
+function makeCard(r, chartW) {
+  var bc = bcolor(r.bias), sc = scolor(r.score);
+  var cls = 'coin-card';
+  if (r.score>=70 && r.bias==='LONG')  cls += ' hl';
+  if (r.score>=70 && r.bias==='SHORT') cls += ' hs';
+
+  var card = document.createElement('div');
+  card.className = cls;
+  card.dataset.coin = r.coin;
+
+  // ── Score ring (canvas created directly)
+  var ringWrap = document.createElement('div');
+  ringWrap.className = 'sr-wrap';
+  var ringCanvas = document.createElement('canvas');
+  ringCanvas.className = 'sr-canvas';
+  ringCanvas.width  = 54;
+  ringCanvas.height = 54;
+  ringWrap.appendChild(ringCanvas);
+  var ringInner = document.createElement('div');
+  ringInner.className = 'sr-inner';
+  ringInner.innerHTML = '<span class="sr-n" style="color:'+sc+'">'+r.score+'</span><span class="sr-b">'+r.bias+'</span>';
+  ringWrap.appendChild(ringInner);
+
+  // ── Coin info
+  var ct = document.createElement('div');
+  ct.className = 'ct';
+  ct.innerHTML =
+    '<div class="ct-r1">'+
+      '<span class="cn">'+r.coin+'<span class="cpair"> /USDC</span></span>'+
+      '<span class="cc '+(+r.chg>=0?'pos':'neg')+'">'+(+r.chg>=0?'+':'')+r.chg+'%</span>'+
+    '</div>'+
+    '<div class="ct-r2">'+
+      '<span class="cprice">$'+fmt(r.price)+'</span>'+
+      '<span class="btag '+bcls(r.bias)+'">'+r.bias+'</span>'+
+    '</div>';
+
+  var header = document.createElement('div');
+  header.className = 'ch';
+  header.appendChild(ringWrap);
+  header.appendChild(ct);
+  card.appendChild(header);
+
+  // ── Chart canvas (created directly — never via innerHTML)
+  var chartBox = document.createElement('div');
+  chartBox.className = 'chart-box';
+  var chartCanvas = document.createElement('canvas');
+  chartCanvas.width  = chartW;
+  chartCanvas.height = 62;
+  chartCanvas.style.width  = chartW + 'px';
+  chartCanvas.style.height = '62px';
+  chartBox.appendChild(chartCanvas);
+  card.appendChild(chartBox);
+
+  // ── Signals
+  var sigsDiv = document.createElement('div');
+  sigsDiv.className = 'sigs';
+  sigsDiv.innerHTML = r.signals.map(function(s){return'<span class="sig">'+s+'</span>';}).join('');
+  card.appendChild(sigsDiv);
+
+  // ── Plan summary
+  var planDiv = document.createElement('div');
+  if (r.plan) {
+    planDiv.className = 'card-plan';
+    planDiv.style.borderColor = bc+'33';
+    planDiv.innerHTML =
+      '<div class="cp-head"><span class="cp-label" style="color:'+bc+'">TRADE PLAN</span><span class="cp-rr">Best RR 1:'+r.plan.rr3+'</span></div>'+
+      '<div class="cp-grid">'+
+      [['ENTRY','$'+fmt(r.plan.entryMid),bc],
+       ['SL',   '$'+fmt(r.plan.sl),      '#ff5252'],
+       ['TP1',  '$'+fmt(r.plan.tp1),     '#ffc107'],
+       ['TP3',  '$'+fmt(r.plan.tp3),     '#00e676']
+      ].map(function(x){
+        return '<div class="cp-cell"><div class="cp-l">'+x[0]+'</div><div class="cp-v" style="color:'+x[2]+'">'+x[1]+'</div></div>';
+      }).join('')+'</div>';
+  } else {
+    planDiv.className = 'no-plan';
+    planDiv.textContent = 'No directional plan — insufficient signal';
+  }
+  card.appendChild(planDiv);
+
+  // ── Draw canvases immediately (element exists, dimensions set as properties)
+  drawScoreRing(ringCanvas, r.score, sc);
+  drawCanvasChart(chartCanvas, r.candles, r.plan);
+
+  return card;
+}
+
+function renderCards(){
+  var sorted = getSorted();
+  var list = document.getElementById('card-list');
+  var emp  = document.getElementById('empty-msg');
+  if (!sorted.length) { list.innerHTML=''; emp.style.display='block'; return; }
+  emp.style.display = 'none';
+
+  var listW  = list.getBoundingClientRect().width || (window.innerWidth||375) - 20;
+  var chartW = Math.max(Math.floor(listW - 26), 260);
+
+  // Rebuild list — simplest and most reliable on Safari
+  // Use a DocumentFragment to batch DOM writes
+  var frag = document.createDocumentFragment();
+  sorted.forEach(function(r) {
+    frag.appendChild(makeCard(r, chartW));
+  });
+  list.innerHTML = '';
+  list.appendChild(frag);
+}
+
+// ── ALERTS
+function renderAlerts(){
+  const bar=document.getElementById('alerts-strip');
+  if(!S.alerts.length){bar.classList.add('hidden');return;}
+  bar.classList.remove('hidden');
+  bar.querySelectorAll('.a-pill').forEach(el=>el.remove());
+  S.alerts.slice(0,6).forEach(function(a){
+    const p=document.createElement('div');
+    p.className='a-pill';
+    p.innerHTML='<span class="ac">'+a.coin+'</span><span class="ab '+a.bias.toLowerCase()+'">'+a.bias+'</span><span class="am">'+a.score+'/100</span>';
+    p.addEventListener('click',function(){openSheet(a.coin);});
+    bar.appendChild(p);
+  });
+}
+
+// ── BOTTOM SHEET
+function openSheet(coin){
+  const r=S.results[coin];if(!r)return;
+  const pl=r.plan,bc=bcolor(r.bias);
+  document.getElementById('sheet-coin').textContent=coin;
+  document.getElementById('sheet-tf').textContent='/USDC · '+(IV_LBL[S.interval]||S.interval);
+  document.getElementById('sheet-score').textContent='Score: '+r.score+'/100';
+
+  const bodyW=Math.max(Math.floor((window.innerWidth||375)-32),280);
+
+  let planHTML='';
+  if(pl){
+    const iL=pl.bias==='LONG';
+    const es=iL?(r.price>pl.entryHigh?'⚠ Wait for pullback':r.price>=pl.entryLow?'✓ In entry zone':'→ Awaiting retracement'):(r.price<pl.entryLow?'⚠ Wait for pullback':r.price<=pl.entryHigh?'✓ In entry zone':'→ Awaiting retracement');
+    planHTML=
+      '<div class="plan-wrap" style="background:#071626;border:1px solid '+bc+'33">'+
+      '<div class="plan-hdr" style="background:linear-gradient(90deg,'+bc+'18,transparent)">'+
+        '<div><span class="plan-bias-lbl" style="color:'+bc+'">'+pl.bias+' SETUP</span></div>'+
+        '<div class="plan-stats">'+
+          '<div class="ps"><div class="ps-l">SL RISK</div><div class="ps-v" style="color:#ff5252">'+pl.slPct+'%</div></div>'+
+          '<div class="ps"><div class="ps-l">BEST RR</div><div class="ps-v" style="color:#00e676">1:'+pl.rr3+'</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="plan-body">'+
+        '<div class="entry-box" style="background:'+bc+'0d;border:1px solid '+bc+'33">'+
+          '<div class="entry-title" style="color:'+bc+'">⦿ ENTRY ZONE <span class="entry-basis">'+pl.entryBasis+'</span></div>'+
+          '<div class="entry-prices">'+
+            '<div class="ep"><div class="ep-l">LOW</div><div class="ep-v">$'+fmt(pl.entryLow)+'</div></div>'+
+            '<div class="ep"><div class="ep-l">IDEAL MID</div><div class="ep-v" style="color:'+bc+'">$'+fmt(pl.entryMid)+'</div></div>'+
+            '<div class="ep"><div class="ep-l">HIGH</div><div class="ep-v">$'+fmt(pl.entryHigh)+'</div></div>'+
+          '</div>'+
+          '<div class="entry-status">Current $'+fmt(r.price)+' · '+es+'</div>'+
+        '</div>'+
+        '<div class="sl-box">'+
+          '<div><div class="sl-l">✕ STOP LOSS</div><div class="sl-basis">'+pl.slBasis+'</div></div>'+
+          '<div><div class="sl-price">$'+fmt(pl.sl)+'</div><div class="sl-risk">Risk: '+pl.slPct+'% from entry</div></div>'+
+        '</div>'+
+        [
+          [pl.tp1,pl.rr1,pl.tp1B,'TP1','#ffc107','rgba(255,193,7,.06)','rgba(255,193,7,.25)','40%','Close 40%'],
+          [pl.tp2,pl.rr2,pl.tp2B,'TP2','#4db6ac','rgba(77,182,172,.06)','rgba(77,182,172,.25)','40%','Close 40%'],
+          [pl.tp3,pl.rr3,pl.tp3B,'TP3','#00e676','rgba(0,230,118,.06)','rgba(0,230,118,.3)', '20%','Let ride'],
+        ].map(function(t){
+          return '<div class="tp-box" style="background:'+t[5]+';border:1px solid '+t[6]+'">'+
+            '<div><div class="tp-l-row"><span class="tp-lbl" style="color:'+t[4]+'">▲ '+t[3]+'</span><span class="tp-pct" style="background:'+t[4]+'">'+t[7]+'</span></div>'+
+            '<div class="tp-basis">'+t[2]+' · '+t[8]+'</div></div>'+
+            '<div><div class="tp-price" style="color:'+t[4]+'">$'+fmt(t[0])+'</div><div class="tp-rr">1:'+t[1]+' RR</div></div>'+
+          '</div>';
+        }).join('')+
+        '<div class="sizing-box"><div class="sz-label">POSITION SIZING (1% risk)</div><div class="sz-grid">'+
+        [[1000,'$1k'],[5000,'$5k'],[10000,'$10k']].map(function(a){
+          var n=Math.round((a[0]*.01)/(pl.risk/pl.entryMid));
+          return '<div class="sz-cell"><div class="sz-a">'+a[1]+'</div><div class="sz-v">$'+n.toLocaleString()+'</div><div class="sz-s">notional</div></div>';
+        }).join('')+
+        '</div></div>'+
+      '</div></div>';
+  } else {
+    planHTML='<div class="no-plan-box"><p>No directional plan — bias NEUTRAL</p><small>Needs CHoCH or Liquidity Sweep</small></div>';
+  }
+
+  let structs='';
+  if(r.fvgs.length||r.obls.length){
+    structs='<div class="structs"><div class="structs-lbl">DETECTED STRUCTURES</div>'+
+      r.fvgs.slice(-4).map(function(f){return'<div class="struct-row"><span style="color:'+(f.type==='bullish'?'#00e676':'#ff5252')+'">▦ FVG '+(f.type==='bullish'?'↑':'↓')+' <span style="color:#2a4a6a">('+f.age+'b)</span></span><span style="color:#6a8aaa">$'+fmt(f.bottom)+'–$'+fmt(f.top)+'</span></div>';}).join('')+
+      r.obls.slice(-4).map(function(o){return'<div class="struct-row"><span style="color:'+(o.type==='bullish'?'#ce93d8':'#f87171')+'">■ OB '+(o.type==='bullish'?'↑':'↓')+' <span style="color:#2a4a6a">('+o.age+'b)</span></span><span style="color:#6a8aaa">$'+fmt(o.bottom)+'–$'+fmt(o.top)+'</span></div>';}).join('')+
+      (r.pd?'<div class="pd-mini"><div class="pdi"><div class="pdi-l">Range Low</div><div class="pdi-v" style="color:#00e676">$'+fmt(r.pd.low)+'</div></div><div class="pdi"><div class="pdi-l">Equilib.</div><div class="pdi-v" style="color:#6a8aaa">$'+fmt(r.pd.mid)+'</div></div><div class="pdi"><div class="pdi-l">Range High</div><div class="pdi-v" style="color:#ff5252">$'+fmt(r.pd.high)+'</div></div></div>':'')+
+    '</div>';
+  }
+
+  const body=document.getElementById('sheet-body');
+  body.innerHTML=
+    '<div style="margin-bottom:12px;border-radius:8px;overflow:hidden;background:#040d1a;line-height:0">'+
+      '<canvas id="sheet-chart" width="'+bodyW+'" height="90" style="display:block"></canvas>'+
+    '</div>'+
+    planHTML+structs+
+    '<div class="warn">⚠ Educational only. Not financial advice. Always confirm on your own chart.</div>';
+
+  // Draw sheet chart AFTER innerHTML is set
+  drawCanvasChart(document.getElementById('sheet-chart'), r.candles, r.plan);
+
+  body.scrollTop=0;
+  const bg=document.getElementById('sheet-bg'),sh=document.getElementById('sheet');
+  bg.classList.add('ready');
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      bg.classList.add('vis');
+      sh.classList.add('open');
+    });
+  });
+}
+
+function closeSheet(){
+  const bg=document.getElementById('sheet-bg'),sh=document.getElementById('sheet');
+  sh.classList.remove('open');
+  bg.classList.remove('vis');
+  setTimeout(function(){bg.classList.remove('ready');},320);
+}
+
+// Swipe down to close
+var sheetStartY=0,sheetDismissing=false;
+document.getElementById('sheet').addEventListener('touchstart',function(e){
+  sheetStartY=e.touches[0].clientY;sheetDismissing=false;
+},{passive:true});
+document.getElementById('sheet').addEventListener('touchmove',function(e){
+  if(sheetDismissing)return;
+  var dy=e.touches[0].clientY-sheetStartY;
+  var bodyEl=document.getElementById('sheet-body');
+  if(dy>70&&bodyEl.scrollTop<=0){sheetDismissing=true;closeSheet();}
+},{passive:true});
+document.getElementById('sheet-bg').addEventListener('click',function(e){
+  if(e.target===document.getElementById('sheet-bg'))closeSheet();
+});
+document.getElementById('sheet-close').addEventListener('click',closeSheet);
+
+// ── DELEGATED CARD CLICK
+document.getElementById('card-list').addEventListener('click',function(e){
+  var card=e.target.closest('.coin-card');
+  if(card&&card.dataset.coin)openSheet(card.dataset.coin);
+});
+
+// ── MARKET PAGE
+function renderMarket(){
+  const all=Object.values(S.results),sorted=getSorted().filter(function(r){return r.plan;}).slice(0,12);
+  document.getElementById('stat-grid').innerHTML=
+    [['Scanned',all.length,'#29b6f6'],['With Plan',all.filter(function(r){return r.plan;}).length,'#ce93d8'],
+     ['LONG',all.filter(function(r){return r.bias==='LONG';}).length,'#00e676'],['SHORT',all.filter(function(r){return r.bias==='SHORT';}).length,'#ff5252'],
+     ['Score 70+',all.filter(function(r){return r.score>=70;}).length,'#ffc107'],['Kill Zone',all.filter(function(r){return r.kz&&r.kz.active;}).length,'#7986cb']]
+    .map(function(x){return'<div class="stat-cell"><div class="stat-l">'+x[0]+'</div><div class="stat-v" style="color:'+x[2]+'">'+x[1]+'</div></div>';}).join('');
+  document.getElementById('top-list').innerHTML=sorted.length?sorted.map(function(r){
+    return'<div class="top-row" data-coin="'+r.coin+'"><div class="tr-l"><span style="color:#e8f0f8;font-weight:700;font-size:13px;font-family:var(--font-h)">'+r.coin+'</span><span class="btag '+bcls(r.bias)+'">'+r.bias+'</span></div>'+
+    '<div class="tr-r"><span style="color:#6a8aaa;font-size:9px">RR 1:'+(r.plan?r.plan.rr3:'—')+'</span><span style="color:'+scolor(r.score)+';font-size:10px;font-weight:700">'+r.score+'/100</span></div></div>';
+  }).join(''):'<div style="color:#2a4a6a;font-size:10px;text-align:center;padding:20px">No plans yet — run a scan first</div>';
+  document.getElementById('top-list').querySelectorAll('.top-row').forEach(function(row){
+    row.addEventListener('click',function(){openSheet(row.dataset.coin);});
+  });
+}
+
+// ── GUIDE PAGE
+function renderGuide(){
+  var items=[
+    ['⦿','#29b6f6','Entry Zone (OTE)','Price returns to the 50-79% retracement of an Order Block or FVG. This is the Optimal Trade Entry — where institutional orders accumulate before the next impulse.'],
+    ['✕','#ff5252','Stop Loss','Placed below the OB low (LONG) or above OB high (SHORT), past the swept liquidity wick. ATR buffer keeps you outside market noise.'],
+    ['▲','#ffc107','TP1 — 1:1 RR (40%)','First opposing FVG above (LONG) or below (SHORT) entry. Exit 40% here and move stop to breakeven. Locked profit before runners.'],
+    ['▲','#4db6ac','TP2 — 2:1 RR (40%)','Nearest swing high/BSL (LONG) or swing low/SSL (SHORT). Institutional distribution zone. Exit 40% more.'],
+    ['▲','#00e676','TP3 — 3:1+ RR (20%)','Full range extreme — premium zone top or discount zone low. Let this 20% run with trailing stop.'],
+    ['💧','#60a5fa','Liquidity Sweep','Price grabs stops above swing highs (BSL) or below swing lows (SSL) then closes back. The stop hunt IS the signal.'],
+    ['⚡','#ce93d8','CHoCH','Change of Character — strong candle breaks last opposing structure. Confirms market maker shifted direction.'],
+    ['▦','#29b6f6','Fair Value Gap','3-candle imbalance. Gap between candle 1 high and candle 3 low not yet traded. Algorithms return to fill it.'],
+    ['■','#ce93d8','Order Block','Last opposing candle before a strong move. Smart money accumulation. Price retests it on pullbacks.'],
+  ];
+  var kzs=[
+    {n:'Asian Range',t:'20:00-00:00',c:'#ffc107',tip:'Low volume, builds the daily range'},
+    {n:'London Open',t:'02:00-05:00',c:'#29b6f6',tip:'Sweeps Asian range, sets daily bias'},
+    {n:'NY Open',t:'08:00-11:00',c:'#ff5252',tip:'Highest volume, true price discovery'},
+    {n:'Silver Bullet',t:'09:00-10:00',c:'#ce93d8',tip:'ICT precision 1-hour window'},
+    {n:'London Close',t:'13:00-14:00',c:'#7986cb',tip:'NY distributes into London close'},
+  ];
+  var now=new Date(),t=now.getUTCHours()*60+now.getUTCMinutes();
+  document.getElementById('guide-content').innerHTML=
+    '<div class="sec-lbl">ICT CONCEPTS</div>'+
+    items.map(function(x){return'<div class="guide-card"><div class="gc-head"><span class="gc-icon">'+x[0]+'</span><span class="gc-title" style="color:'+x[1]+'">'+x[2]+'</span></div><div class="gc-body">'+x[3]+'</div></div>';}).join('')+
+    '<div class="sec-lbl" style="margin-top:16px">KILL ZONES (UTC)</div>'+
+    kzs.map(function(k){
+      var parts=k.t.split('-'),sh=+parts[0].split(':')[0],sm=+parts[0].split(':')[1],eh=+parts[1].split(':')[0];
+      var on=t>=sh*60+sm&&t<=eh*60;
+      return'<div class="kz-item" style="'+(on?'background:'+k.c+'12;border-color:'+k.c+'44':'')+'">'+
+        '<div class="kz-dot" style="background:'+(on?k.c:'#1a3a5c')+'"></div>'+
+        '<div style="flex:1"><div style="display:flex;justify-content:space-between">'+
+        '<span class="kz-n" style="color:'+(on?k.c:'#6a8aaa')+'">'+k.n+'</span>'+
+        '<span class="kz-t" style="color:#2a4a6a">'+k.t+'</span></div>'+
+        '<div class="kz-tip">'+k.tip+'</div></div></div>';
+    }).join('')+
+    '<div class="warn" style="margin-top:8px">⚠ Educational scanner. Not financial advice. ICT strategies are discretionary — this finds candidates, your judgment makes the trade.</div>';
+}
+
+// ── NAV
+function setPage(p){
+  S.page=p;
+  document.querySelectorAll('.page').forEach(function(el){el.classList.toggle('active',el.id===p);});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.page===p);});
+  if(p==='p-market')renderMarket();
+  if(p==='p-guide')renderGuide();
+}
+document.getElementById('nav').addEventListener('click',function(e){
+  var btn=e.target.closest('.nav-btn');if(btn)setPage(btn.dataset.page);
+});
+
+// ── TIMEFRAME + FILTERS
+document.getElementById('tf-row').addEventListener('click',function(e){
+  var btn=e.target.closest('.tf-btn');if(!btn)return;
+  S.interval=btn.dataset.iv;
+  document.querySelectorAll('.tf-btn').forEach(function(b){b.classList.toggle('active',b===btn);});
+  S.results={};renderCards();runScan();
+});
+document.getElementById('filter-row').addEventListener('click',function(e){
+  var btn=e.target.closest('.chip');if(!btn)return;
+  var g=btn.dataset.g,v=btn.dataset.v;
+  if(g==='bias'){S.filterBias=v;document.querySelectorAll('[data-g="bias"]').forEach(function(b){b.classList.toggle('active',b===btn);});}
+  if(g==='score'){S.minScore=+v;document.querySelectorAll('[data-g="score"]').forEach(function(b){b.classList.toggle('active',b===btn);});}
+  if(g==='sort'){S.sortBy=v;document.querySelectorAll('[data-g="sort"]').forEach(function(b){b.classList.toggle('active',b===btn);});}
+  renderCards();
+});
+document.getElementById('scan-btn').addEventListener('click',runScan);
+
+// ── INIT
+updateKZ();
+setInterval(updateKZ,60000);
+runScan();
+setInterval(function(){if(!scanning)runScan();},90000);
+</script>
+</body>
+</html>
